@@ -1,5 +1,29 @@
 import { User, UserAccount, RegistrationData } from '@/types/user';
 import { validateAccessCode } from '@/constants/RoleCredentials';
+import { initializeApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { getStorage } from 'firebase/storage';
+
+// Firebase configuration
+const firebaseConfig = {
+  // TODO: Replace with your Firebase project configuration
+  // You can get this from Firebase Console > Project Settings > General > Your apps
+  apiKey: "your-api-key",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "your-app-id"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+// Initialize Firebase services
+export const db = getFirestore(app);
+export const auth = getAuth(app);
+export const storage = getStorage(app);
 
 class FirebaseAuth {
   private currentUser: User | null = null;

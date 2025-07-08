@@ -1,4 +1,17 @@
 import { Event } from '@/types/events';
+import {
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  updateDoc,
+  deleteDoc,
+  query,
+  orderBy,
+  Timestamp
+} from 'firebase/firestore';
+import { db } from './firebase';
+
 const getDateWithOffset = (dayOffset: number, hourOffset = 0, minuteOffset = 0): string => {
   const date = new Date();
   date.setDate(date.getDate() + dayOffset);
@@ -144,45 +157,114 @@ const mockEvents: Event[] = [
 ];
 
 export const getEvents = async (): Promise<Event[]> => {
-  await new Promise(resolve => setTimeout(resolve, 800));
-  return mockEvents;
+  try {
+    const eventsCollection = collection(db, 'events');
+    const eventsQuery = query(eventsCollection, orderBy('startTime', 'asc'));
+    const querySnapshot = await getDocs(eventsQuery);
+
+    const events: Event[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      events.push({
+        id: doc.id,
+        ...data,
+      } as Event);
+    });
+
+    // If no events in Firebase, return mock events for demo
+    if (events.length === 0) {
+      return mockEvents;
+    }
+
+    return events;
+  } catch (error) {
+    console.error('Error fetching events:', error);
+    // Fallback to mock data if Firebase fails
+    return mockEvents;
+  }
 };
 
 export const createEvent = async (event: Omit<Event, 'id'>): Promise<Event> => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  const newEvent: Event = {
-    ...event,
-    id: Math.random().toString(36).substring(2, 9),
-  };
-  
-  mockEvents.push(newEvent);
-  
-  return newEvent;
+  try {
+    const eventsCollection = collection(db, 'events');
+    const docRef = await addDoc(eventsCollection, {
+      ...event,
+      createdAt: Timestamp.now(),
+    });
+
+    const newEvent: Event = {
+      ...event,
+      id: docRef.id,
+    };
+
+    return newEvent;
+  } catch (error) {
+    console.error('Error creating event:', error);
+    // Fallback to mock behavior if Firebase fails
+    const newEvent: Event = {
+      ...event,
+      id: Math.random().toString(36).substring(2, 9),
+    };
+
+    mockEvents.push(newEvent);
+    return newEvent;
+  }
 };
 
 export const updateEvent = async (id: string, updates: Partial<Event>): Promise<Event> => {
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  const index = mockEvents.findIndex(e => e.id === id);
-  if (index === -1) {
-    throw new Error('Event not found');
+  try {
+    const eventDoc = doc(db, 'events', id);
+    await updateDoc(eventDoc, {
+      ...updates,
+      updatedAt: Timestamp.now(),
+    });
+
+    // Get the updated event
+    const updatedEvent = await getEventById(id);
+    if (!updatedEvent) {
+      throw new Error('Event not found after update');
+    }
+
+    return updatedEvent;
+  } catch (error) {
+    console.error('Error updating event:', error);
+    // Fallback to mock behavior
+    const index = mockEvents.findIndex(e => e.id === id);
+    if (index === -1) {
+      throw new Error('Event not found');
+    }
+
+    const updatedEvent = {
+      ...mockEvents[index],
+      ...updates,
+    };
+
+    mockEvents[index] = updatedEvent;
+    return updatedEvent;
   }
-  
-  const updatedEvent = {
-    ...mockEvents[index],
-    ...updates,
-  };
-  
-  mockEvents[index] = updatedEvent;
-  
-  return updatedEvent;
 };
 
 export const deleteEvent = async (id: string): Promise<void> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const index = mockEvents.findIndex(e => e.id === id);
-  if (index !== -1) {
-    mockEvents.splice(index, 1);
+  try {
+    const eventDoc = doc(db, 'events', id);
+    await deleteDoc(eventDoc);
+  } catch (error) {
+    console.error('Error deleting event:', error);
+    // Fallback to mock behavior
+    const index = mockEvents.findIndex(e => e.id === id);
+    if (index !== -1) {
+      mockEvents.splice(index, 1);
+    }
+  }
+};
+
+// Helper function to get a single event by ID
+const getEventById = async (id: string): Promise<Event | null> => {
+  try {
+    const events = await getEvents();
+    return events.find(event => event.id === id) || null;
+  } catch (error) {
+    console.error('Error getting event by ID:', error);
+    return null;
   }
 };
