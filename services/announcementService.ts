@@ -1,4 +1,16 @@
 import { Announcement } from '@/types/announcements';
+import {
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  updateDoc,
+  deleteDoc,
+  query,
+  orderBy,
+  Timestamp
+} from 'firebase/firestore';
+import { db } from './firebase';
 const mockAnnouncements: Announcement[] = [
   {
     id: '1',
@@ -76,54 +88,127 @@ const mockAnnouncements: Announcement[] = [
 ];
 
 export const getAnnouncements = async (): Promise<Announcement[]> => {
-  await new Promise(resolve => setTimeout(resolve, 800));
-  return [...mockAnnouncements].sort((a, b) => {
-    if (a.isPinned && !b.isPinned) return -1;
-    if (!a.isPinned && b.isPinned) return 1;
-    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-  });
+  try {
+    const announcementsCollection = collection(db, 'announcements');
+    const announcementsQuery = query(announcementsCollection, orderBy('timestamp', 'desc'));
+    const querySnapshot = await getDocs(announcementsQuery);
+
+    const announcements: Announcement[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      announcements.push({
+        id: doc.id,
+        ...data,
+      } as Announcement);
+    });
+
+    // Return announcements from Firebase (even if empty array)
+    console.log('Fetched announcements from Firebase:', announcements.length);
+    return announcements.sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+    });
+  } catch (error) {
+    console.error('Error fetching announcements:', error);
+    // Fallback to mock data if Firebase fails
+    return [...mockAnnouncements].sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+    });
+  }
 };
 
 export const createAnnouncement = async (announcement: Omit<Announcement, 'id' | 'timestamp'>): Promise<Announcement> => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  const newAnnouncement: Announcement = {
-    ...announcement,
-    id: Math.random().toString(36).substring(2, 9),
-    timestamp: new Date().toISOString(),
-  };
-  
-  mockAnnouncements.unshift(newAnnouncement);
-  
-  return newAnnouncement;
+  try {
+    const announcementsCollection = collection(db, 'announcements');
+    const docRef = await addDoc(announcementsCollection, {
+      ...announcement,
+      timestamp: new Date().toISOString(),
+      createdAt: Timestamp.now(),
+    });
+
+    const newAnnouncement: Announcement = {
+      ...announcement,
+      id: docRef.id,
+      timestamp: new Date().toISOString(),
+    };
+
+    console.log('Created announcement in Firebase:', newAnnouncement.id);
+    return newAnnouncement;
+  } catch (error) {
+    console.error('Error creating announcement:', error);
+    // Fallback to mock behavior if Firebase fails
+    const newAnnouncement: Announcement = {
+      ...announcement,
+      id: Math.random().toString(36).substring(2, 9),
+      timestamp: new Date().toISOString(),
+    };
+
+    mockAnnouncements.unshift(newAnnouncement);
+    return newAnnouncement;
+  }
 };
 
 export const deleteAnnouncement = async (id: string): Promise<void> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const index = mockAnnouncements.findIndex(a => a.id === id);
-  if (index !== -1) {
-    mockAnnouncements.splice(index, 1);
+  try {
+    const announcementDoc = doc(db, 'announcements', id);
+    await deleteDoc(announcementDoc);
+    console.log('Deleted announcement from Firebase:', id);
+  } catch (error) {
+    console.error('Error deleting announcement:', error);
+    // Fallback to mock behavior
+    const index = mockAnnouncements.findIndex(a => a.id === id);
+    if (index !== -1) {
+      mockAnnouncements.splice(index, 1);
+    }
   }
 };
 
 export const updateAnnouncement = async (id: string, updates: Partial<Announcement>): Promise<Announcement> => {
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  const index = mockAnnouncements.findIndex(a => a.id === id);
-  if (index === -1) {
-    throw new Error('Announcement not found');
+  try {
+    const announcementDoc = doc(db, 'announcements', id);
+    await updateDoc(announcementDoc, {
+      ...updates,
+      updatedAt: Timestamp.now(),
+    });
+
+    // Get the updated announcement
+    const updatedAnnouncement = await getAnnouncementById(id);
+    if (!updatedAnnouncement) {
+      throw new Error('Announcement not found after update');
+    }
+
+    console.log('Updated announcement in Firebase:', id);
+    return updatedAnnouncement;
+  } catch (error) {
+    console.error('Error updating announcement:', error);
+    // Fallback to mock behavior
+    const index = mockAnnouncements.findIndex(a => a.id === id);
+    if (index === -1) {
+      throw new Error('Announcement not found');
+    }
+
+    const updatedAnnouncement = {
+      ...mockAnnouncements[index],
+      ...updates,
+    };
+
+    mockAnnouncements[index] = updatedAnnouncement;
+    return updatedAnnouncement;
   }
-  
-  const updatedAnnouncement = {
-    ...mockAnnouncements[index],
-    ...updates,
-  };
-  
-  mockAnnouncements[index] = updatedAnnouncement;
-  
-  return updatedAnnouncement;
+};
+
+// Helper function to get a single announcement by ID
+const getAnnouncementById = async (id: string): Promise<Announcement | null> => {
+  try {
+    const announcements = await getAnnouncements();
+    return announcements.find(announcement => announcement.id === id) || null;
+  } catch (error) {
+    console.error('Error getting announcement by ID:', error);
+    return null;
+  }
 };
 
 export const toggleAnnouncementPin = async (id: string): Promise<Announcement> => {

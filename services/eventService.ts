@@ -171,11 +171,8 @@ export const getEvents = async (): Promise<Event[]> => {
       } as Event);
     });
 
-    // If no events in Firebase, return mock events for demo
-    if (events.length === 0) {
-      return mockEvents;
-    }
-
+    // Return events from Firebase (even if empty array)
+    console.log('Fetched events from Firebase:', events.length);
     return events;
   } catch (error) {
     console.error('Error fetching events:', error);
