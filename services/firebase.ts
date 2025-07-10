@@ -22,9 +22,21 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase services
 export const db = getFirestore(app);
-export const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(ReactNativeAsyncStorage)
-});
+
+// Initialize Firebase Auth with error handling
+let auth: any;
+try {
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+  });
+} catch (error) {
+  // If initializeAuth fails (e.g., already initialized), get the existing instance
+  console.log('Auth already initialized, getting existing instance');
+  const { getAuth } = require('firebase/auth');
+  auth = getAuth(app);
+}
+
+export { auth };
 export const storage = getStorage(app);
 
 class FirebaseAuth {

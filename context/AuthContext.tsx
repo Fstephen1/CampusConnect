@@ -1,5 +1,7 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import { auth } from '@/services/firebase';
+// import { auth } from '@/services/firebase';
+// Temporarily disabled Firebase imports to fix initialization issues
+/*
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -8,6 +10,7 @@ import {
   updateProfile as updateFirebaseProfile,
   User as FirebaseUser
 } from 'firebase/auth';
+*/
 import { User, ProfileUpdate, RegistrationData } from '@/types/user';
 import { validateAccessCode } from '@/constants/RoleCredentials';
 
@@ -38,6 +41,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Temporarily disable Firebase Auth to test app loading
+    setLoading(false);
+
+    // TODO: Re-enable Firebase Auth once app loads properly
+    /*
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
         const user: User = {
@@ -55,16 +63,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
     });
 
     return unsubscribe;
+    */
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      await signInWithEmailAndPassword(auth, email, password);
-      // User state will be updated by onAuthStateChanged
+      // Temporarily use mock login for testing
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Mock user for testing
+      const mockUser: User = {
+        uid: 'mock-user-id',
+        email: email,
+        displayName: 'Test User',
+        photoURL: null,
+        role: 'student'
+      };
+      setUser(mockUser);
+
+      // TODO: Re-enable Firebase Auth
+      // await signInWithEmailAndPassword(auth, email, password);
     } catch (error: any) {
-      setLoading(false);
       throw new Error(error.message || 'Failed to log in');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -78,39 +101,49 @@ export function AuthProvider({ children }: AuthProviderProps) {
         throw new Error(`Invalid ${role} access code. Please contact your administrator.`);
       }
 
-      // Create user with Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      // Temporarily use mock registration
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Update user profile with display name
-      await updateFirebaseProfile(userCredential.user, {
-        displayName: name
-      });
+      const mockUser: User = {
+        uid: 'mock-user-id',
+        email: email,
+        displayName: name,
+        photoURL: null,
+        role: role
+      };
+      setUser(mockUser);
 
-      // User state will be updated by onAuthStateChanged
+      // TODO: Re-enable Firebase Auth
+      // const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      // await updateFirebaseProfile(userCredential.user, { displayName: name });
     } catch (error: any) {
-      setLoading(false);
       throw new Error(error.message || 'Failed to register');
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = async () => {
     try {
       setLoading(true);
-      await signOut(auth);
-      // User state will be updated by onAuthStateChanged
+      // Temporarily use mock logout
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setUser(null);
+
+      // TODO: Re-enable Firebase Auth
+      // await signOut(auth);
     } catch (error: any) {
-      setLoading(false);
       throw new Error(error.message || 'Failed to log out');
+    } finally {
+      setLoading(false);
     }
   };
 
   const updateProfile = async (updates: ProfileUpdate) => {
-    if (!user || !auth.currentUser) throw new Error('User not authenticated');
+    if (!user) throw new Error('User not authenticated');
 
-    await updateFirebaseProfile(auth.currentUser, {
-      displayName: updates.displayName,
-      photoURL: updates.photoURL
-    });
+    // Temporarily use mock update
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     setUser(prevUser => {
       if (!prevUser) return null;
@@ -119,6 +152,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         ...updates,
       };
     });
+
+    // TODO: Re-enable Firebase Auth
+    // await updateFirebaseProfile(auth.currentUser, {
+    //   displayName: updates.displayName,
+    //   photoURL: updates.photoURL
+    // });
   };
 
   const value = {
