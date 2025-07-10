@@ -1,18 +1,9 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-// import { auth } from '@/services/firebase';
-// Temporarily disabled Firebase imports to fix initialization issues
-/*
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  updateProfile as updateFirebaseProfile,
-  User as FirebaseUser
-} from 'firebase/auth';
-*/
 import { User, ProfileUpdate, RegistrationData } from '@/types/user';
 import { validateAccessCode } from '@/constants/RoleCredentials';
+
+// TEMPORARY: Completely disable Firebase imports to fix initialization issues
+// TODO: Re-enable Firebase Auth once initialization issues are resolved
 
 interface AuthContextType {
   user: User | null;

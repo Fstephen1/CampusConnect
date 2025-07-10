@@ -23,6 +23,9 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase services
 export const db = getFirestore(app);
 
+// TEMPORARY: Disable Firebase Auth initialization to fix errors
+// TODO: Re-enable once initialization issues are resolved
+/*
 // Initialize Firebase Auth with error handling
 let auth: any;
 try {
@@ -37,6 +40,7 @@ try {
 }
 
 export { auth };
+*/
 export const storage = getStorage(app);
 
 class FirebaseAuth {
