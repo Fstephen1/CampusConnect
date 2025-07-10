@@ -11,7 +11,7 @@ import RoleManagement from '@/components/RoleManagement';
 export default function ProfileScreen() {
   const { user, logout, loading, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState(user?.displayName || '');
+  const [editName, setEditName] = useState('');
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [updatingProfile, setUpdatingProfile] = useState(false);
   const [showNotificationRoles, setShowNotificationRoles] = useState(false);
@@ -19,6 +19,13 @@ export default function ProfileScreen() {
   const [userPreferences, setUserPreferences] = useState<UserNotificationPreferences | null>(null);
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [showRoleManagement, setShowRoleManagement] = useState(false);
+
+  // Update editName when user changes
+  useEffect(() => {
+    if (user?.displayName) {
+      setEditName(user.displayName);
+    }
+  }, [user?.displayName]);
 
   useEffect(() => {
     if (user && user.role === 'student') {
