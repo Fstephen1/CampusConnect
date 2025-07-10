@@ -27,7 +27,18 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/campus-connect-favicon.png",
+      "name": "CampusConnect",
+      "shortName": "CampusConnect",
+      "lang": "en",
+      "scope": "/",
+      "themeColor": "#3b82f6",
+      "backgroundColor": "#ffffff",
+      "startUrl": "/",
+      "display": "standalone",
+      "orientation": "portrait",
+      "preferRelatedApplications": false,
+      "manifest": "./assets/manifest.json"
     },
     "plugins": [
       "expo-router",
