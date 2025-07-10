@@ -1,9 +1,6 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { User, ProfileUpdate, RegistrationData } from '@/types/user';
-import { validateAccessCode } from '@/constants/RoleCredentials';
-
-// TEMPORARY: Completely disable Firebase imports to fix initialization issues
-// TODO: Re-enable Firebase Auth once initialization issues are resolved
+import { firebaseAuth } from '@/services/firebase';
 
 interface AuthContextType {
   user: User | null;
@@ -60,21 +57,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      // Temporarily use mock login for testing
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Mock user for testing
-      const mockUser: User = {
-        uid: 'mock-user-id',
-        email: email,
-        displayName: 'Test User',
-        photoURL: null,
-        role: 'student'
-      };
-      setUser(mockUser);
-
-      // TODO: Re-enable Firebase Auth
-      // await signInWithEmailAndPassword(auth, email, password);
+      const user = await firebaseAuth.login(email, password);
+      setUser(user);
     } catch (error: any) {
       throw new Error(error.message || 'Failed to log in');
     } finally {
@@ -85,28 +69,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const register = async (registrationData: RegistrationData) => {
     try {
       setLoading(true);
-      const { name, email, password, role, accessCode } = registrationData;
-
-      // Validate access code for role
-      if (!validateAccessCode(role, accessCode)) {
-        throw new Error(`Invalid ${role} access code. Please contact your administrator.`);
-      }
-
-      // Temporarily use mock registration
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const mockUser: User = {
-        uid: 'mock-user-id',
-        email: email,
-        displayName: name,
-        photoURL: null,
-        role: role
-      };
-      setUser(mockUser);
-
-      // TODO: Re-enable Firebase Auth
-      // const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      // await updateFirebaseProfile(userCredential.user, { displayName: name });
+      const user = await firebaseAuth.register(registrationData);
+      setUser(user);
     } catch (error: any) {
       throw new Error(error.message || 'Failed to register');
     } finally {

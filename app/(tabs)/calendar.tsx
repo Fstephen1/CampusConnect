@@ -322,12 +322,15 @@ export default function CalendarScreen() {
           </View>
         )}
         
-        <View style={styles.eventDetailItem}>
-          <Clock size={14} color={COLORS.textMedium} />
-          <Text style={styles.eventDetailText}>
-            {format(parseISO(item.startTime), 'h:mm a')} - {format(parseISO(item.endTime), 'h:mm a')}
-          </Text>
-        </View>
+        {/* Only show time if it's not the default 9:00 AM - 10:00 AM */}
+        {!(format(parseISO(item.startTime), 'HH:mm') === '09:00' && format(parseISO(item.endTime), 'HH:mm') === '10:00') && (
+          <View style={styles.eventDetailItem}>
+            <Clock size={14} color={COLORS.textMedium} />
+            <Text style={styles.eventDetailText}>
+              {format(parseISO(item.startTime), 'h:mm a')} - {format(parseISO(item.endTime), 'h:mm a')}
+            </Text>
+          </View>
+        )}
         
         {item.attendees && (
           <View style={styles.eventDetailItem}>

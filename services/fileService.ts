@@ -1,6 +1,9 @@
 import { MediaFile, FileAttachment } from '@/types/files';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
+import { storage } from './firebase';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+
 const mockFileStorage: { [key: string]: FileAttachment } = {};
 
 export const pickDocument = async (): Promise<MediaFile | null> => {
@@ -88,29 +91,83 @@ export const pickVideo = async (): Promise<MediaFile | null> => {
 };
 
 export const uploadFile = async (file: MediaFile, uploadedBy: string): Promise<FileAttachment> => {
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  const fileId = Math.random().toString(36).substring(2, 9);
-  const fileType = file.type.startsWith('image/') ? 'image' : 
-                   file.type.startsWith('video/') ? 'video' : 'document';
-  
-  const attachment: FileAttachment = {
-    id: fileId,
-    name: file.name,
-    type: fileType,
-    url: file.uri,
-    size: file.size || 0,
-    uploadedAt: new Date().toISOString(),
-    uploadedBy,
-  };
-  
-  mockFileStorage[fileId] = attachment;
-  return attachment;
+  try {
+    const fileId = Math.random().toString(36).substring(2, 9);
+    const fileType = file.type.startsWith('image/') ? 'image' :
+                     file.type.startsWith('video/') ? 'video' : 'document';
+
+    // Create a reference to Firebase Storage
+    const fileName = `${fileType}s/${fileId}_${file.name}`;
+    const storageRef = ref(storage, fileName);
+
+    // Convert file URI to blob for upload
+    const response = await fetch(file.uri);
+    const blob = await response.blob();
+
+    // Upload file to Firebase Storage
+    console.log('Uploading file to Firebase Storage:', fileName);
+    await uploadBytes(storageRef, blob);
+
+    // Get download URL
+    const downloadURL = await getDownloadURL(storageRef);
+    console.log('File uploaded successfully, URL:', downloadURL);
+
+    const attachment: FileAttachment = {
+      id: fileId,
+      name: file.name,
+      url: downloadURL,
+      type: fileType,
+      size: file.size || 0,
+      uploadedAt: new Date().toISOString(),
+      uploadedBy,
+    };
+
+    // Also store in mock storage as backup
+    mockFileStorage[fileId] = attachment;
+    return attachment;
+  } catch (error) {
+    console.error('Error uploading file to Firebase Storage:', error);
+    // Fallback to mock storage if Firebase fails
+    const fileId = Math.random().toString(36).substring(2, 9);
+    const fileType = file.type.startsWith('image/') ? 'image' :
+                     file.type.startsWith('video/') ? 'video' : 'document';
+
+    const attachment: FileAttachment = {
+      id: fileId,
+      name: file.name,
+      url: file.uri, // Use local URI as fallback
+      type: fileType,
+      size: file.size || 0,
+      uploadedAt: new Date().toISOString(),
+      uploadedBy,
+    };
+
+    mockFileStorage[fileId] = attachment;
+    return attachment;
+  }
 };
 
 export const deleteFile = async (fileId: string): Promise<void> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  delete mockFileStorage[fileId];
+  try {
+    // Get file info from mock storage to find the Firebase path
+    const fileInfo = mockFileStorage[fileId];
+    if (fileInfo && fileInfo.url.includes('firebase')) {
+      // Extract file path from Firebase URL and delete from Firebase Storage
+      const fileName = fileInfo.url.split('/').pop()?.split('?')[0];
+      if (fileName) {
+        const storageRef = ref(storage, fileName);
+        await deleteObject(storageRef);
+        console.log('File deleted from Firebase Storage:', fileName);
+      }
+    }
+
+    // Remove from mock storage
+    delete mockFileStorage[fileId];
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    // Still remove from mock storage even if Firebase deletion fails
+    delete mockFileStorage[fileId];
+  }
 };
 
 export const getFileIcon = (type: string) => {

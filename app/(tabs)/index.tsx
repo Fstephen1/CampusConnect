@@ -244,19 +244,21 @@ export default function HomeScreen() {
       <Text style={styles.announcementTitle}>{item.title}</Text>
       <Text style={styles.announcementContent} numberOfLines={3}>{item.content}</Text>
 
-      {(item.startTime || item.endTime) && (
+      {(item.startTime && item.startTime.trim() !== '') || (item.endTime && item.endTime.trim() !== '') ? (
         <View style={styles.timeContainer}>
           <Clock size={14} color={COLORS.textMedium} />
           <Text style={styles.timeText}>
-            {item.startTime && item.endTime
+            {item.startTime && item.endTime && item.startTime.trim() !== '' && item.endTime.trim() !== ''
               ? `${item.startTime} - ${item.endTime}`
-              : item.startTime
+              : item.startTime && item.startTime.trim() !== ''
                 ? `From ${item.startTime}`
-                : `Until ${item.endTime}`
+                : item.endTime && item.endTime.trim() !== ''
+                  ? `Until ${item.endTime}`
+                  : ''
             }
           </Text>
         </View>
-      )}
+      ) : null}
 
       {item.attachments && item.attachments.length > 0 && (
         <AttachmentViewer attachments={item.attachments} />
