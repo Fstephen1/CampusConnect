@@ -1,6 +1,15 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import { firebaseAuth } from '@/services/firebase';
+import { auth } from '@/services/firebase';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  updateProfile as updateFirebaseProfile,
+  User as FirebaseUser
+} from 'firebase/auth';
 import { User, ProfileUpdate, RegistrationData } from '@/types/user';
+import { validateAccessCode } from '@/constants/RoleCredentials';
 
 interface AuthContextType {
   user: User | null;
@@ -29,8 +38,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = firebaseAuth.onAuthStateChanged((user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        const user: User = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          displayName: firebaseUser.displayName || '',
+          photoURL: firebaseUser.photoURL || null,
+          role: 'student' // Default role, you might want to store this in Firestore
+        };
+        setUser(user);
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
 
@@ -40,37 +60,57 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const user = await firebaseAuth.login(email, password);
-      setUser(user);
-    } finally {
+      await signInWithEmailAndPassword(auth, email, password);
+      // User state will be updated by onAuthStateChanged
+    } catch (error: any) {
       setLoading(false);
+      throw new Error(error.message || 'Failed to log in');
     }
   };
 
   const register = async (registrationData: RegistrationData) => {
     try {
       setLoading(true);
-      const user = await firebaseAuth.register(registrationData);
-      setUser(user);
-    } finally {
+      const { name, email, password, role, accessCode } = registrationData;
+
+      // Validate access code for role
+      if (!validateAccessCode(role, accessCode)) {
+        throw new Error(`Invalid ${role} access code. Please contact your administrator.`);
+      }
+
+      // Create user with Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+      // Update user profile with display name
+      await updateFirebaseProfile(userCredential.user, {
+        displayName: name
+      });
+
+      // User state will be updated by onAuthStateChanged
+    } catch (error: any) {
       setLoading(false);
+      throw new Error(error.message || 'Failed to register');
     }
   };
 
   const logout = async () => {
     try {
       setLoading(true);
-      await firebaseAuth.logout();
-      setUser(null);
-    } finally {
+      await signOut(auth);
+      // User state will be updated by onAuthStateChanged
+    } catch (error: any) {
       setLoading(false);
+      throw new Error(error.message || 'Failed to log out');
     }
   };
 
   const updateProfile = async (updates: ProfileUpdate) => {
-    if (!user) throw new Error('User not authenticated');
-    
-    await firebaseAuth.updateUserProfile(user.uid, updates);
+    if (!user || !auth.currentUser) throw new Error('User not authenticated');
+
+    await updateFirebaseProfile(auth.currentUser, {
+      displayName: updates.displayName,
+      photoURL: updates.photoURL
+    });
 
     setUser(prevUser => {
       if (!prevUser) return null;
