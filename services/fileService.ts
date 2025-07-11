@@ -91,11 +91,33 @@ export const pickVideo = async (): Promise<MediaFile | null> => {
 };
 
 export const uploadFile = async (file: MediaFile, uploadedBy: string): Promise<FileAttachment> => {
-  try {
-    const fileId = Math.random().toString(36).substring(2, 9);
-    const fileType = file.type.startsWith('image/') ? 'image' :
-                     file.type.startsWith('video/') ? 'video' : 'document';
+  const fileId = Math.random().toString(36).substring(2, 9);
+  const fileType = file.type.startsWith('image/') ? 'image' :
+                   file.type.startsWith('video/') ? 'video' : 'document';
 
+  // For now, use mock storage until Firebase Storage is properly configured
+  console.log('Using mock file storage (Firebase Storage not configured)');
+  console.log('File details:', { name: file.name, type: file.type, size: file.size });
+
+  // Simulate upload delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  const attachment: FileAttachment = {
+    id: fileId,
+    name: file.name,
+    url: file.uri, // Use local URI for now
+    type: fileType,
+    size: file.size || 0,
+    uploadedAt: new Date().toISOString(),
+    uploadedBy,
+  };
+
+  mockFileStorage[fileId] = attachment;
+  console.log('File stored in mock storage:', attachment.id);
+  return attachment;
+
+  /* TODO: Enable Firebase Storage once properly configured
+  try {
     // Create a reference to Firebase Storage
     const fileName = `${fileType}s/${fileId}_${file.name}`;
     const storageRef = ref(storage, fileName);
@@ -122,20 +144,15 @@ export const uploadFile = async (file: MediaFile, uploadedBy: string): Promise<F
       uploadedBy,
     };
 
-    // Also store in mock storage as backup
     mockFileStorage[fileId] = attachment;
     return attachment;
   } catch (error) {
     console.error('Error uploading file to Firebase Storage:', error);
-    // Fallback to mock storage if Firebase fails
-    const fileId = Math.random().toString(36).substring(2, 9);
-    const fileType = file.type.startsWith('image/') ? 'image' :
-                     file.type.startsWith('video/') ? 'video' : 'document';
-
+    // Fallback to mock storage
     const attachment: FileAttachment = {
       id: fileId,
       name: file.name,
-      url: file.uri, // Use local URI as fallback
+      url: file.uri,
       type: fileType,
       size: file.size || 0,
       uploadedAt: new Date().toISOString(),
@@ -145,6 +162,7 @@ export const uploadFile = async (file: MediaFile, uploadedBy: string): Promise<F
     mockFileStorage[fileId] = attachment;
     return attachment;
   }
+  */
 };
 
 export const deleteFile = async (fileId: string): Promise<void> => {

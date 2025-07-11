@@ -13,11 +13,25 @@ interface AttachmentViewerProps {
 export default function AttachmentViewer({ attachments, showTitle = true }: AttachmentViewerProps) {
   const handleAttachmentPress = async (attachment: FileAttachment) => {
     try {
+      // Check if it's a local file URI (from mock storage)
+      if (attachment.url.startsWith('file://')) {
+        Alert.alert(
+          'File Preview',
+          `File: ${attachment.name}\nSize: ${formatFileSize(attachment.size)}\n\nNote: This is a local file. Firebase Storage is not configured yet, so files are stored locally and cannot be shared between devices.`,
+          [
+            { text: 'OK', style: 'default' }
+          ]
+        );
+        return;
+      }
+
+      // Handle different file types
       if (attachment.type === 'image') {
         Alert.alert('Image Viewer', 'Image viewer would open here');
       } else if (attachment.type === 'video') {
         Alert.alert('Video Player', 'Video player would open here');
       } else {
+        // Try to open Firebase Storage URLs or other web URLs
         const supported = await Linking.canOpenURL(attachment.url);
         if (supported) {
           await Linking.openURL(attachment.url);
@@ -26,17 +40,21 @@ export default function AttachmentViewer({ attachments, showTitle = true }: Atta
         }
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to open file');
+      console.error('Error opening attachment:', error);
+      Alert.alert('Error', 'Failed to open file. Please try again.');
     }
   };
 
   const getFileIcon = (attachment: FileAttachment) => {
     if (attachment.type === 'image') {
       return (
-        <Image 
-          source={{ uri: attachment.url }} 
+        <Image
+          source={{ uri: attachment.url }}
           style={styles.thumbnailImage}
           resizeMode="cover"
+          onError={() => {
+            console.log('Failed to load image thumbnail:', attachment.url);
+          }}
         />
       );
     }
