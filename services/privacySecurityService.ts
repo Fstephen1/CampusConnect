@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// Temporarily disable Firebase auth imports to prevent crashes
-// import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
-// import { auth } from './firebase';
+import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
+import { auth } from './firebase';
 
 export interface PrivacySettings {
   profileVisibility: 'public' | 'students' | 'private';
@@ -77,10 +76,14 @@ class PrivacySecurityService {
     return { ...this.privacySettings };
   }
 
-  // Password Management (Simplified version)
+  // Password Management
   async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
     try {
-      // Simulate password change validation
+      const user = auth.currentUser;
+      if (!user || !user.email) {
+        return { success: false, error: 'No authenticated user found' };
+      }
+
       if (!currentPassword || !newPassword) {
         return { success: false, error: 'Please fill in all fields' };
       }
@@ -89,13 +92,12 @@ class PrivacySecurityService {
         return { success: false, error: 'New password must be at least 6 characters' };
       }
 
-      // Simulate current password validation (in real app, this would check against Firebase)
-      if (currentPassword.length < 6) {
-        return { success: false, error: 'Current password is incorrect' };
-      }
+      // Re-authenticate user before changing password
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
 
-      // Simulate successful password change
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Update password
+      await updatePassword(user, newPassword);
 
       // Log this security event
       await this.logSecurityEvent('password_changed');
@@ -103,7 +105,17 @@ class PrivacySecurityService {
       return { success: true };
     } catch (error: any) {
       console.error('Error changing password:', error);
-      return { success: false, error: 'Failed to change password. Please try again.' };
+
+      let errorMessage = 'Failed to change password';
+      if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Current password is incorrect';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'New password is too weak';
+      } else if (error.code === 'auth/requires-recent-login') {
+        errorMessage = 'Please log out and log back in before changing password';
+      }
+
+      return { success: false, error: errorMessage };
     }
   }
 

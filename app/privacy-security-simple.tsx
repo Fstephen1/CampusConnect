@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, Modal, TextInput } from 'react-native';
 import { router } from 'expo-router';
 import { ArrowLeft, Shield, Key, Eye, Download, Trash2, Settings } from 'lucide-react-native';
 import { COLORS } from '@/constants/Colors';
 import { useAuth } from '@/hooks/useAuth';
+import { privacySecurityService } from '@/services/privacySecurityService';
 
 export default function PrivacySecuritySimpleScreen() {
   const { user, logout } = useAuth();
@@ -11,16 +12,53 @@ export default function PrivacySecuritySimpleScreen() {
   const [showReadReceipts, setShowReadReceipts] = useState(true);
   const [hideNotificationContent, setHideNotificationContent] = useState(false);
 
+  // Password change modal state
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
   const handleGoBack = () => {
     router.back();
   };
 
   const handleChangePassword = () => {
-    Alert.alert(
-      'Change Password',
-      'Password change functionality is temporarily disabled. This feature will be available in a future update.',
-      [{ text: 'OK' }]
-    );
+    setShowChangePasswordModal(true);
+  };
+
+  const handlePasswordChangeSubmit = async () => {
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      Alert.alert('Error', 'New passwords do not match');
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      Alert.alert('Error', 'New password must be at least 6 characters');
+      return;
+    }
+
+    try {
+      setPasswordLoading(true);
+      const result = await privacySecurityService.changePassword(
+        passwordForm.currentPassword,
+        passwordForm.newPassword
+      );
+
+      if (result.success) {
+        Alert.alert('Success', 'Password changed successfully');
+        setShowChangePasswordModal(false);
+        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      } else {
+        Alert.alert('Error', result.error || 'Failed to change password');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to change password');
+    } finally {
+      setPasswordLoading(false);
+    }
   };
 
   const handleExportData = () => {
@@ -211,6 +249,69 @@ export default function PrivacySecuritySimpleScreen() {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Change Password Modal */}
+      <Modal
+        visible={showChangePasswordModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowChangePasswordModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Change Password</Text>
+              <TouchableOpacity onPress={() => setShowChangePasswordModal(false)}>
+                <Text style={styles.modalClose}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>Current Password</Text>
+              <TextInput
+                style={styles.formInput}
+                value={passwordForm.currentPassword}
+                onChangeText={(text) => setPasswordForm({ ...passwordForm, currentPassword: text })}
+                secureTextEntry
+                placeholder="Enter current password"
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>New Password</Text>
+              <TextInput
+                style={styles.formInput}
+                value={passwordForm.newPassword}
+                onChangeText={(text) => setPasswordForm({ ...passwordForm, newPassword: text })}
+                secureTextEntry
+                placeholder="Enter new password"
+              />
+              <Text style={styles.passwordNote}>Password must be at least 6 characters</Text>
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>Confirm New Password</Text>
+              <TextInput
+                style={styles.formInput}
+                value={passwordForm.confirmPassword}
+                onChangeText={(text) => setPasswordForm({ ...passwordForm, confirmPassword: text })}
+                secureTextEntry
+                placeholder="Confirm new password"
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.submitButton, passwordLoading && styles.submitButtonDisabled]}
+              onPress={handlePasswordChangeSubmit}
+              disabled={passwordLoading}
+            >
+              <Text style={styles.submitButtonText}>
+                {passwordLoading ? 'Changing...' : 'Change Password'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -315,5 +416,73 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     color: COLORS.textLight,
     textAlign: 'center',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    width: '90%',
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontFamily: 'Inter-Bold',
+    color: COLORS.textDark,
+  },
+  modalClose: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+    color: COLORS.primary,
+  },
+  formGroup: {
+    marginBottom: 16,
+  },
+  formLabel: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: COLORS.textDark,
+    marginBottom: 8,
+  },
+  formInput: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: COLORS.textDark,
+  },
+  passwordNote: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    color: COLORS.textMedium,
+    marginTop: 4,
+  },
+  submitButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  submitButtonDisabled: {
+    backgroundColor: COLORS.textLight,
+  },
+  submitButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
   },
 });

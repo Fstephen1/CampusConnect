@@ -107,6 +107,7 @@ export default function RegisterScreen() {
               onChangeText={setPassword}
               secureTextEntry
             />
+            <Text style={styles.passwordNote}>Password must be at least 6 characters</Text>
           </View>
 
           <View style={styles.inputContainer}>
@@ -277,6 +278,12 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     fontSize: 16,
+  },
+  passwordNote: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    color: COLORS.textMedium,
+    marginTop: 4,
   },
   registerButton: {
     backgroundColor: COLORS.primary,
