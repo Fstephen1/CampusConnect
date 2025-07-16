@@ -6,6 +6,7 @@ import { useFonts, Inter_400Regular, Inter_700Bold, Inter_500Medium } from '@exp
 import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { NotificationProvider } from '@/context/NotificationContext';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -28,12 +29,14 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" options={{ title: 'Not Found' }} />
-        </Stack>
-        <StatusBar style="auto" />
+        <NotificationProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" options={{ title: 'Not Found' }} />
+          </Stack>
+          <StatusBar style="auto" />
+        </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
   );

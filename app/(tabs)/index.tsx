@@ -15,9 +15,11 @@ import { NotificationRole } from '@/types/notificationRoles';
 import { notificationService } from '@/services/notificationService';
 import { NotificationSummary } from '@/types/notifications';
 import NotificationModal from '@/components/NotificationModal';
+import { useNotifications } from '@/context/NotificationContext';
 
 export default function HomeScreen() {
   const { user } = useAuth();
+  const { updateBadgeCount } = useNotifications();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -70,6 +72,9 @@ export default function HomeScreen() {
     try {
       const summary = await notificationService.getNotificationSummary(user.uid);
       setNotificationSummary(summary);
+
+      // Update phone badge count
+      await updateBadgeCount(summary.unread);
     } catch (err) {
       console.error('Failed to load notification summary:', err);
     }

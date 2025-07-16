@@ -11,6 +11,7 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { pushNotificationService } from './pushNotificationService';
 
 const getDateWithOffset = (dayOffset: number, hourOffset = 0, minuteOffset = 0): string => {
   const date = new Date();
@@ -194,6 +195,11 @@ export const createEvent = async (event: Omit<Event, 'id'>): Promise<Event> => {
       id: docRef.id,
     };
 
+    console.log('Created event in Firebase:', newEvent.id);
+
+    // Send push notification for new event
+    await sendEventNotification(newEvent);
+
     return newEvent;
   } catch (error) {
     console.error('Error creating event:', error);
@@ -204,7 +210,54 @@ export const createEvent = async (event: Omit<Event, 'id'>): Promise<Event> => {
     };
 
     mockEvents.push(newEvent);
+
+    // Still send push notification for mock events
+    await sendEventNotification(newEvent);
+
     return newEvent;
+  }
+};
+
+// Helper function to send push notifications for new events
+const sendEventNotification = async (event: Event) => {
+  try {
+    // Format event time for notification
+    const eventTime = event.startTime ? ` at ${event.startTime}` : '';
+    const eventDate = event.startTime ? '' : ' (Time TBA)';
+
+    // Determine notification title and body
+    const notificationTitle = `📅 New ${event.type || 'Event'}`;
+    const notificationBody = `${event.title}${eventTime}${eventDate}`;
+
+    // Create notification data
+    const notificationData = {
+      type: 'event' as const,
+      title: notificationTitle,
+      body: notificationBody,
+      data: {
+        eventId: event.id,
+        authorName: event.organizer,
+        category: event.type || 'Event',
+      },
+    };
+
+    // In a real app, you would:
+    // 1. Get all student user IDs who should receive this notification
+    // 2. Filter based on targetRoles if event is targeted
+    // 3. Send to backend API to deliver push notifications
+
+    // For now, simulate sending to all students
+    const mockStudentIds = ['student1', 'student2', 'student3'];
+
+    // Send push notification
+    await pushNotificationService.sendPushNotificationToUsers(
+      mockStudentIds.map(id => `mock-token-${id}`),
+      notificationData
+    );
+
+    console.log('Push notification sent for event:', event.title);
+  } catch (error) {
+    console.error('Error sending event notification:', error);
   }
 };
 

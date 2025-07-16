@@ -11,6 +11,7 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { pushNotificationService } from './pushNotificationService';
 const mockAnnouncements: Announcement[] = [
   {
     id: '1',
@@ -136,6 +137,10 @@ export const createAnnouncement = async (announcement: Omit<Announcement, 'id' |
     };
 
     console.log('Created announcement in Firebase:', newAnnouncement.id);
+
+    // Send push notification to relevant users
+    await sendAnnouncementNotification(newAnnouncement);
+
     return newAnnouncement;
   } catch (error) {
     console.error('Error creating announcement:', error);
@@ -147,7 +152,50 @@ export const createAnnouncement = async (announcement: Omit<Announcement, 'id' |
     };
 
     mockAnnouncements.unshift(newAnnouncement);
+
+    // Still send push notification for mock announcements
+    await sendAnnouncementNotification(newAnnouncement);
+
     return newAnnouncement;
+  }
+};
+
+// Helper function to send push notifications for new announcements
+const sendAnnouncementNotification = async (announcement: Announcement) => {
+  try {
+    // Determine notification title and body
+    const notificationTitle = `📢 New ${announcement.category || 'Announcement'}`;
+    const notificationBody = announcement.title;
+
+    // Create notification data
+    const notificationData = {
+      type: 'announcement' as const,
+      title: notificationTitle,
+      body: notificationBody,
+      data: {
+        announcementId: announcement.id,
+        authorName: announcement.authorName,
+        category: announcement.category || 'General',
+      },
+    };
+
+    // In a real app, you would:
+    // 1. Get all student user IDs who should receive this notification
+    // 2. Filter based on targetRoles if announcement is targeted
+    // 3. Send to backend API to deliver push notifications
+
+    // For now, simulate sending to all students
+    const mockStudentIds = ['student1', 'student2', 'student3'];
+
+    // Send push notification
+    await pushNotificationService.sendPushNotificationToUsers(
+      mockStudentIds.map(id => `mock-token-${id}`),
+      notificationData
+    );
+
+    console.log('Push notification sent for announcement:', announcement.title);
+  } catch (error) {
+    console.error('Error sending announcement notification:', error);
   }
 };
 

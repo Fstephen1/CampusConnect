@@ -7,6 +7,7 @@ import { LogOut, Settings, ChevronRight, CreditCard as Edit2, User, Bell, Shield
 import { notificationRoleService } from '@/services/notificationRoleService';
 import { NotificationRole, UserNotificationPreferences } from '@/types/notificationRoles';
 import RoleManagement from '@/components/RoleManagement';
+import NotificationStatus from '@/components/NotificationStatus';
 
 export default function ProfileScreen() {
   const { user, logout, loading, updateProfile } = useAuth();
@@ -202,7 +203,7 @@ export default function ProfileScreen() {
 
       <View style={styles.sectionContainer}>
         <Text style={styles.sectionTitle}>Preferences</Text>
-        
+
         <View style={styles.settingItem}>
           <View style={styles.settingIconContainer}>
             <Bell size={20} color={COLORS.primary} />
@@ -210,6 +211,7 @@ export default function ProfileScreen() {
           <View style={styles.settingTextContainer}>
             <Text style={styles.settingLabel}>Notifications</Text>
             <Text style={styles.settingDescription}>Receive push notifications</Text>
+            <NotificationStatus />
           </View>
           <Switch
             value={notificationsEnabled}
