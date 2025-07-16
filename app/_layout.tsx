@@ -38,6 +38,9 @@ export default function RootLayout() {
               <Stack.Screen name="settings" options={{ headerShown: false }} />
               <Stack.Screen name="privacy-security" options={{ headerShown: false }} />
               <Stack.Screen name="privacy-security-simple" options={{ headerShown: false }} />
+              <Stack.Screen name="support" options={{ headerShown: false }} />
+              <Stack.Screen name="support/faq" options={{ headerShown: false }} />
+              <Stack.Screen name="support/contact" options={{ headerShown: false }} />
               <Stack.Screen name="+not-found" options={{ title: 'Not Found' }} />
             </Stack>
             <StatusBar style="auto" />

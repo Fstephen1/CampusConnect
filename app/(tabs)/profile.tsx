@@ -296,13 +296,16 @@ export default function ProfileScreen() {
       <View style={styles.sectionContainer}>
         <Text style={styles.sectionTitle}>Support</Text>
         
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={() => router.push('/support')}
+        >
           <View style={styles.settingIconContainer}>
             <HelpCircle size={20} color={COLORS.primary} />
           </View>
           <View style={styles.settingTextContainer}>
-            <Text style={styles.settingLabel}>Help & FAQ</Text>
-            <Text style={styles.settingDescription}>Get answers to common questions</Text>
+            <Text style={styles.settingLabel}>Support Center</Text>
+            <Text style={styles.settingDescription}>Help, FAQ, contact support & report issues</Text>
           </View>
           <ChevronRight size={20} color={COLORS.textLight} />
         </TouchableOpacity>
