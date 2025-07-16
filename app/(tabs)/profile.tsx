@@ -244,13 +244,16 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         )}
 
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={() => router.push('/privacy-security')}
+        >
           <View style={styles.settingIconContainer}>
             <Shield size={20} color={COLORS.primary} />
           </View>
           <View style={styles.settingTextContainer}>
             <Text style={styles.settingLabel}>Privacy & Security</Text>
-            <Text style={styles.settingDescription}>Manage your privacy settings</Text>
+            <Text style={styles.settingDescription}>Password, privacy, data & account security</Text>
           </View>
           <ChevronRight size={20} color={COLORS.textLight} />
         </TouchableOpacity>

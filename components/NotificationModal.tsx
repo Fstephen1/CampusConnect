@@ -6,6 +6,7 @@ import { Notification } from '@/types/notifications';
 import { notificationService } from '@/services/notificationService';
 import { formatDistanceToNow } from 'date-fns';
 import QuickSettings from './QuickSettings';
+import PrivacyQuickSettings from './PrivacyQuickSettings';
 
 interface NotificationModalProps {
   visible: boolean;
@@ -197,6 +198,7 @@ export default function NotificationModal({ visible, onClose, userId, onNotifica
           </View>
 
           <QuickSettings />
+          <PrivacyQuickSettings />
 
           {notifications.length === 0 ? (
             <View style={styles.emptyState}>
