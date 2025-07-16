@@ -1,6 +1,19 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { pushNotificationService, PushNotificationData } from '@/services/pushNotificationService';
+// import { pushNotificationService, PushNotificationData } from '@/services/pushNotificationService'; // Disabled
 import { useAuth } from '@/hooks/useAuth';
+
+// Mock PushNotificationData interface
+export interface PushNotificationData {
+  type: 'announcement' | 'event' | 'system';
+  title: string;
+  body: string;
+  data?: {
+    announcementId?: string;
+    eventId?: string;
+    authorName?: string;
+    category?: string;
+  };
+}
 
 interface NotificationContextType {
   pushToken: string | null;
@@ -21,63 +34,25 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   const [pushToken, setPushToken] = useState<string | null>(null);
   const [isNotificationEnabled, setIsNotificationEnabled] = useState(false);
 
+  // Disabled push notification initialization to prevent errors
   useEffect(() => {
-    initializeNotifications();
-
-    // Cleanup on unmount
-    return () => {
-      pushNotificationService.cleanup();
-    };
+    console.log('Push notifications disabled to prevent errors');
+    setIsNotificationEnabled(false);
+    setPushToken(null);
   }, []);
 
-  const initializeNotifications = async () => {
-    try {
-      const token = await pushNotificationService.initialize();
-      if (token) {
-        setPushToken(token);
-        setIsNotificationEnabled(true);
-        console.log('Push notifications initialized successfully');
-      } else {
-        console.log('Push notifications not available');
-        setIsNotificationEnabled(false);
-      }
-    } catch (error) {
-      console.error('Failed to initialize push notifications:', error);
-      setIsNotificationEnabled(false);
-    }
-  };
-
+  // Mock functions to prevent errors when push notifications are disabled
   const sendNotificationToUsers = async (userIds: string[], notification: PushNotificationData): Promise<boolean> => {
-    try {
-      // In a real app, you would send userIds to your backend
-      // The backend would look up push tokens for these users and send notifications
-      
-      // For now, we'll simulate this by sending a local notification
-      // This simulates receiving a notification from another user
-      const userTokens = userIds.map(id => `mock-token-${id}`);
-      
-      const success = await pushNotificationService.sendPushNotificationToUsers(userTokens, notification);
-      return success;
-    } catch (error) {
-      console.error('Error sending notification to users:', error);
-      return false;
-    }
+    console.log('Push notifications disabled - sendNotificationToUsers called but not executed');
+    return false;
   };
 
   const updateBadgeCount = async (count: number) => {
-    try {
-      await pushNotificationService.setBadgeCount(count);
-    } catch (error) {
-      console.error('Error updating badge count:', error);
-    }
+    console.log('Push notifications disabled - updateBadgeCount called but not executed');
   };
 
   const clearAllNotifications = async () => {
-    try {
-      await pushNotificationService.clearAllNotifications();
-    } catch (error) {
-      console.error('Error clearing notifications:', error);
-    }
+    console.log('Push notifications disabled - clearAllNotifications called but not executed');
   };
 
   const value: NotificationContextType = {
@@ -96,9 +71,12 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 }
 
 export function useNotifications(): NotificationContextType {
-  const context = useContext(NotificationContext);
-  if (context === undefined) {
-    throw new Error('useNotifications must be used within a NotificationProvider');
-  }
-  return context;
+  // Return mock notification context when push notifications are disabled
+  return {
+    pushToken: null,
+    isNotificationEnabled: false,
+    sendNotificationToUsers: async () => false,
+    updateBadgeCount: async () => {},
+    clearAllNotifications: async () => {},
+  };
 }

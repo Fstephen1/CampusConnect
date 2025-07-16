@@ -19,7 +19,7 @@ import { useNotifications } from '@/context/NotificationContext';
 
 export default function HomeScreen() {
   const { user } = useAuth();
-  const { updateBadgeCount } = useNotifications();
+  // const { updateBadgeCount } = useNotifications(); // Disabled to prevent push notification errors
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -73,8 +73,8 @@ export default function HomeScreen() {
       const summary = await notificationService.getNotificationSummary(user.uid);
       setNotificationSummary(summary);
 
-      // Update phone badge count
-      await updateBadgeCount(summary.unread);
+      // Update phone badge count - Disabled to prevent push notification errors
+      // await updateBadgeCount(summary.unread);
     } catch (err) {
       console.error('Failed to load notification summary:', err);
     }
