@@ -246,7 +246,7 @@ export default function ProfileScreen() {
 
         <TouchableOpacity
           style={styles.settingItem}
-          onPress={() => router.push('/privacy-security')}
+          onPress={() => router.push('/privacy-security-simple')}
         >
           <View style={styles.settingIconContainer}>
             <Shield size={20} color={COLORS.primary} />
