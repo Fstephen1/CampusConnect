@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Linking } from 'react-native';
 import { router } from 'expo-router';
-import { ArrowLeft, Phone, Mail, Clock, MapPin, Send, Copy } from 'lucide-react-native';
+import { ArrowLeft, Phone, Mail, Clock, MapPin, Send } from 'lucide-react-native';
 import { COLORS } from '@/constants/Colors';
 import { useAuth } from '@/hooks/useAuth';
 import { supportService } from '@/services/supportService';
-import * as Clipboard from 'expo-clipboard';
 
 export default function ContactSupportScreen() {
   const { user } = useAuth();
@@ -72,9 +71,10 @@ export default function ContactSupportScreen() {
     }
   };
 
-  const copyToClipboard = async (text: string, label: string) => {
-    await Clipboard.setStringAsync(text);
-    Alert.alert('Copied!', `${label} copied to clipboard.`);
+  const showContactInfo = (label: string, value: string) => {
+    Alert.alert(label, value, [
+      { text: 'OK' }
+    ]);
   };
 
   const renderContactMethod = (
@@ -82,7 +82,7 @@ export default function ContactSupportScreen() {
     title: string,
     value: string,
     onPress: () => void,
-    onCopy?: () => void
+    onInfo?: () => void
   ) => (
     <View style={styles.contactMethod}>
       <View style={styles.contactMethodHeader}>
@@ -96,9 +96,9 @@ export default function ContactSupportScreen() {
         <TouchableOpacity style={styles.actionButton} onPress={onPress}>
           <Text style={styles.actionButtonText}>Contact</Text>
         </TouchableOpacity>
-        {onCopy && (
-          <TouchableOpacity style={styles.copyButton} onPress={onCopy}>
-            <Copy size={16} color={COLORS.textMedium} />
+        {onInfo && (
+          <TouchableOpacity style={styles.infoButton} onPress={onInfo}>
+            <Text style={styles.infoButtonText}>Info</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -125,7 +125,7 @@ export default function ContactSupportScreen() {
             'Phone Support',
             contactInfo.phone,
             handleCall,
-            () => copyToClipboard(contactInfo.phone, 'Phone number')
+            () => showContactInfo('Phone Number', contactInfo.phone)
           )}
 
           {renderContactMethod(
@@ -133,7 +133,7 @@ export default function ContactSupportScreen() {
             'Email Support',
             contactInfo.email,
             handleEmail,
-            () => copyToClipboard(contactInfo.email, 'Email address')
+            () => showContactInfo('Email Address', contactInfo.email)
           )}
 
           <View style={styles.contactMethod}>
@@ -328,10 +328,18 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
     color: 'white',
   },
-  copyButton: {
-    padding: 8,
+  infoButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 6,
     backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  infoButtonText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    color: COLORS.textMedium,
   },
   formGroup: {
     marginBottom: 16,
