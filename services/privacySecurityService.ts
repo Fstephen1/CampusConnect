@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
-import { auth } from './firebase';
+import { firebaseAuth } from './firebase';
 
 export interface PrivacySettings {
   profileVisibility: 'public' | 'students' | 'private';
@@ -79,11 +78,6 @@ class PrivacySecurityService {
   // Password Management
   async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const user = auth.currentUser;
-      if (!user || !user.email) {
-        return { success: false, error: 'No authenticated user found' };
-      }
-
       if (!currentPassword || !newPassword) {
         return { success: false, error: 'Please fill in all fields' };
       }
@@ -92,12 +86,8 @@ class PrivacySecurityService {
         return { success: false, error: 'New password must be at least 6 characters' };
       }
 
-      // Re-authenticate user before changing password
-      const credential = EmailAuthProvider.credential(user.email, currentPassword);
-      await reauthenticateWithCredential(user, credential);
-
-      // Update password
-      await updatePassword(user, newPassword);
+      // Use the mock Firebase auth to change password
+      await firebaseAuth.changePassword(currentPassword, newPassword);
 
       // Log this security event
       await this.logSecurityEvent('password_changed');
@@ -107,12 +97,12 @@ class PrivacySecurityService {
       console.error('Error changing password:', error);
 
       let errorMessage = 'Failed to change password';
-      if (error.code === 'auth/wrong-password') {
+      if (error.message.includes('Current password is incorrect')) {
         errorMessage = 'Current password is incorrect';
-      } else if (error.code === 'auth/weak-password') {
-        errorMessage = 'New password is too weak';
-      } else if (error.code === 'auth/requires-recent-login') {
-        errorMessage = 'Please log out and log back in before changing password';
+      } else if (error.message.includes('must be at least 6 characters')) {
+        errorMessage = 'New password must be at least 6 characters';
+      } else if (error.message.includes('No authenticated user')) {
+        errorMessage = 'Please log in again to change your password';
       }
 
       return { success: false, error: errorMessage };

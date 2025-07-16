@@ -141,7 +141,7 @@ class FirebaseAuth {
   
   async updateUserProfile(uid: string, updates: { displayName?: string; photoURL?: string }): Promise<void> {
     await new Promise(resolve => setTimeout(resolve, 800));
-    
+
     if (this.currentUser && this.currentUser.uid === uid) {
       this.currentUser = {
         ...this.currentUser,
@@ -158,6 +158,33 @@ class FirebaseAuth {
     } else {
       throw new Error('User not found');
     }
+  }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    if (!this.currentUser || !this.currentUser.email) {
+      throw new Error('No authenticated user');
+    }
+
+    const userAccount = this.users[this.currentUser.email];
+    if (!userAccount) {
+      throw new Error('User account not found');
+    }
+
+    // Verify current password
+    if (userAccount.password !== currentPassword) {
+      throw new Error('Current password is incorrect');
+    }
+
+    // Validate new password
+    if (newPassword.length < 6) {
+      throw new Error('New password must be at least 6 characters');
+    }
+
+    // Update password
+    userAccount.password = newPassword;
+    console.log(`Password updated for user: ${this.currentUser.email}`);
   }
   
   getCurrentUser(): User | null {
