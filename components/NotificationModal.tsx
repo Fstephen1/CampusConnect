@@ -5,6 +5,7 @@ import { COLORS } from '@/constants/Colors';
 import { Notification } from '@/types/notifications';
 import { notificationService } from '@/services/notificationService';
 import { formatDistanceToNow } from 'date-fns';
+import QuickSettings from './QuickSettings';
 
 interface NotificationModalProps {
   visible: boolean;
@@ -194,6 +195,8 @@ export default function NotificationModal({ visible, onClose, userId, onNotifica
               </TouchableOpacity>
             </View>
           </View>
+
+          <QuickSettings />
 
           {notifications.length === 0 ? (
             <View style={styles.emptyState}>

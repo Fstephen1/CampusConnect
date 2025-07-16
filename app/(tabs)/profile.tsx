@@ -255,13 +255,16 @@ export default function ProfileScreen() {
           <ChevronRight size={20} color={COLORS.textLight} />
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={() => router.push('/settings')}
+        >
           <View style={styles.settingIconContainer}>
             <Settings size={20} color={COLORS.primary} />
           </View>
           <View style={styles.settingTextContainer}>
             <Text style={styles.settingLabel}>App Settings</Text>
-            <Text style={styles.settingDescription}>Customize your experience</Text>
+            <Text style={styles.settingDescription}>Notifications, theme, display & account</Text>
           </View>
           <ChevronRight size={20} color={COLORS.textLight} />
         </TouchableOpacity>

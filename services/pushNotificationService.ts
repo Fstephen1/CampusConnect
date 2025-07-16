@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import { appSettingsService } from './appSettingsService';
 
 // Configure notification behavior
 Notifications.setNotificationHandler({
@@ -132,15 +133,31 @@ class PushNotificationService {
 
   async sendLocalNotification(notificationData: PushNotificationData) {
     try {
-      const channelId = notificationData.type === 'announcement' ? 'announcements' : 
+      // Check if notifications should be shown based on settings
+      if (!appSettingsService.shouldShowNotification(notificationData.type)) {
+        console.log('Notification blocked by settings:', notificationData.title);
+        return;
+      }
+
+      const settings = appSettingsService.getSettings();
+      const channelId = notificationData.type === 'announcement' ? 'announcements' :
                        notificationData.type === 'event' ? 'events' : 'default';
+
+      // Determine sound based on settings
+      let sound: string | boolean = 'default';
+      if (settings.notificationSound === 'none') {
+        sound = false;
+      } else if (settings.notificationSound !== 'default') {
+        sound = settings.notificationSound;
+      }
 
       await Notifications.scheduleNotificationAsync({
         content: {
           title: notificationData.title,
           body: notificationData.body,
           data: notificationData.data || {},
-          sound: 'default',
+          sound: sound,
+          vibrate: settings.vibrationEnabled ? [0, 250, 250, 250] : false,
         },
         trigger: null, // Show immediately
         identifier: `${notificationData.type}_${Date.now()}`,
