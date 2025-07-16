@@ -12,6 +12,9 @@ import FileUploader from '@/components/FileUploader';
 import AttachmentViewer from '@/components/AttachmentViewer';
 import { notificationRoleService } from '@/services/notificationRoleService';
 import { NotificationRole } from '@/types/notificationRoles';
+import { notificationService } from '@/services/notificationService';
+import { NotificationSummary } from '@/types/notifications';
+import NotificationModal from '@/components/NotificationModal';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -32,6 +35,10 @@ export default function HomeScreen() {
   const [availableRoles, setAvailableRoles] = useState<NotificationRole[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<string[]>(['general']);
   const [isPublic, setIsPublic] = useState(true);
+
+  // Notification states
+  const [notificationSummary, setNotificationSummary] = useState<NotificationSummary | null>(null);
+  const [isNotificationModalVisible, setIsNotificationModalVisible] = useState(false);
 
   const loadAnnouncements = async () => {
     try {
@@ -57,6 +64,17 @@ export default function HomeScreen() {
     }
   };
 
+  const loadNotificationSummary = async () => {
+    if (!user) return;
+
+    try {
+      const summary = await notificationService.getNotificationSummary(user.uid);
+      setNotificationSummary(summary);
+    } catch (err) {
+      console.error('Failed to load notification summary:', err);
+    }
+  };
+
   useEffect(() => {
     if (!user) {
       router.replace('/login');
@@ -64,6 +82,7 @@ export default function HomeScreen() {
     }
 
     loadAnnouncements();
+    loadNotificationSummary();
     if (user.role === 'teacher' || user.role === 'admin') {
       loadNotificationRoles();
     }
@@ -72,6 +91,7 @@ export default function HomeScreen() {
   const onRefresh = () => {
     setRefreshing(true);
     loadAnnouncements();
+    loadNotificationSummary();
   };
 
   const handleCreateAnnouncement = async () => {
@@ -378,11 +398,18 @@ export default function HomeScreen() {
                     <Plus size={24} color={COLORS.primary} />
                   </TouchableOpacity>
                 )}
-                <TouchableOpacity style={styles.notificationButton}>
+                <TouchableOpacity
+                  style={styles.notificationButton}
+                  onPress={() => setIsNotificationModalVisible(true)}
+                >
                   <Bell size={24} color={COLORS.primary} />
-                  <View style={styles.notificationBadge}>
-                    <Text style={styles.notificationCount}>3</Text>
-                  </View>
+                  {notificationSummary && notificationSummary.unread > 0 && (
+                    <View style={styles.notificationBadge}>
+                      <Text style={styles.notificationCount}>
+                        {notificationSummary.unread > 99 ? '99+' : notificationSummary.unread}
+                      </Text>
+                    </View>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -607,6 +634,20 @@ export default function HomeScreen() {
           </View>
         </View>
       </Modal>
+
+      <NotificationModal
+        visible={isNotificationModalVisible}
+        onClose={() => {
+          setIsNotificationModalVisible(false);
+          loadNotificationSummary(); // Refresh notification count when modal closes
+        }}
+        userId={user?.uid || 'mock-user-id'}
+        onNotificationPress={(notification) => {
+          // Handle notification press - could navigate to related announcement/event
+          console.log('Notification pressed:', notification);
+          setIsNotificationModalVisible(false);
+        }}
+      />
     </View>
   );
 }
