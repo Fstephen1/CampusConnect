@@ -253,7 +253,7 @@ export default function ProfileScreen() {
           </View>
           <View style={styles.settingTextContainer}>
             <Text style={styles.settingLabel}>Privacy & Security</Text>
-            <Text style={styles.settingDescription}>Password, privacy, data & account security</Text>
+            <Text style={styles.settingDescription}>Password (min. 6 characters), privacy & security</Text>
           </View>
           <ChevronRight size={20} color={COLORS.textLight} />
         </TouchableOpacity>
