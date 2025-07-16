@@ -15,7 +15,6 @@ import {
   AppPermission 
 } from '@/services/privacySecurityService';
 import { formatDistanceToNow } from 'date-fns';
-import PasswordRequirements from '@/components/PasswordRequirements';
 
 export default function PrivacySecurityScreen() {
   const { user, logout } = useAuth();
@@ -393,12 +392,7 @@ export default function PrivacySecurityScreen() {
                 value={passwordForm.newPassword}
                 onChangeText={(text) => setPasswordForm({ ...passwordForm, newPassword: text })}
                 secureTextEntry
-                placeholder="Enter new password (min. 6 characters)"
-              />
-              <PasswordRequirements
-                password={passwordForm.newPassword}
-                confirmPassword={passwordForm.confirmPassword}
-                showConfirmation={passwordForm.confirmPassword.length > 0}
+                placeholder="Enter new password"
               />
             </View>
 

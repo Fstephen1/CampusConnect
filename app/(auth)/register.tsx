@@ -4,8 +4,6 @@ import { router } from 'expo-router';
 import { UserPlus } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { COLORS } from '@/constants/Colors';
-import PasswordRequirements from '@/components/PasswordRequirements';
-import PasswordStrengthIndicator from '@/components/PasswordStrengthIndicator';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
@@ -104,17 +102,11 @@ export default function RegisterScreen() {
             <Text style={styles.label}>Password</Text>
             <TextInput
               style={styles.input}
-              placeholder="Create a password (min. 6 characters)"
+              placeholder="Create a password"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
             />
-            <PasswordRequirements
-              password={password}
-              confirmPassword={confirmPassword}
-              showConfirmation={confirmPassword.length > 0}
-            />
-            <PasswordStrengthIndicator password={password} />
           </View>
 
           <View style={styles.inputContainer}>
