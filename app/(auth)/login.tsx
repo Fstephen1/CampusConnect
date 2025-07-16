@@ -72,6 +72,11 @@ export default function LoginScreen() {
               onChangeText={setPassword}
               secureTextEntry
             />
+            {password.length > 0 && password.length < 6 && (
+              <Text style={styles.passwordHint}>
+                ⚠️ Password should be at least 6 characters
+              </Text>
+            )}
           </View>
 
           <TouchableOpacity style={styles.forgotPassword}>
@@ -184,6 +189,13 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     fontSize: 16,
+  },
+  passwordHint: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+    color: COLORS.warning,
+    marginTop: 4,
+    textAlign: 'center',
   },
   forgotPassword: {
     alignSelf: 'flex-end',
