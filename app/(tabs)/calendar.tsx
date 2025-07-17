@@ -85,9 +85,13 @@ export default function CalendarScreen() {
   };
 
   // Filter events for the selected date
-  const filteredEvents = events.filter(event => 
-    isSameDay(parseISO(event.startTime), selectedDate)
-  );
+  const filteredEvents = events.filter(event => {
+    if (!event.startTime || event.startTime.trim() === '') {
+      // For events without time, show them on the selected date
+      return true;
+    }
+    return isSameDay(parseISO(event.startTime), selectedDate);
+  });
 
   // Get event type color
   const getEventTypeColor = (type: string) => {
@@ -114,14 +118,18 @@ export default function CalendarScreen() {
     }
 
     try {
-      // Set default times if not provided
+      // Only set times if user provided them
       const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
-      const startTime = newEvent.startTime
-        ? `${selectedDateStr}T${newEvent.startTime}:00.000Z`
-        : `${selectedDateStr}T09:00:00.000Z`;
-      const endTime = newEvent.endTime
-        ? `${selectedDateStr}T${newEvent.endTime}:00.000Z`
-        : `${selectedDateStr}T10:00:00.000Z`;
+      let startTime = '';
+      let endTime = '';
+
+      if (newEvent.startTime && newEvent.startTime.trim() !== '') {
+        startTime = `${selectedDateStr}T${newEvent.startTime}:00.000Z`;
+      }
+
+      if (newEvent.endTime && newEvent.endTime.trim() !== '') {
+        endTime = `${selectedDateStr}T${newEvent.endTime}:00.000Z`;
+      }
 
       const event = await createEvent({
         ...newEvent,
@@ -146,13 +154,17 @@ export default function CalendarScreen() {
     if (!editingEvent) return;
 
     try {
-      const selectedDateStr = format(parseISO(editingEvent.startTime), 'yyyy-MM-dd');
-      const startTime = newEvent.startTime
-        ? `${selectedDateStr}T${newEvent.startTime}:00.000Z`
-        : editingEvent.startTime;
-      const endTime = newEvent.endTime
-        ? `${selectedDateStr}T${newEvent.endTime}:00.000Z`
-        : editingEvent.endTime;
+      const selectedDateStr = format(parseISO(editingEvent.startTime || new Date().toISOString()), 'yyyy-MM-dd');
+      let startTime = '';
+      let endTime = '';
+
+      if (newEvent.startTime && newEvent.startTime.trim() !== '') {
+        startTime = `${selectedDateStr}T${newEvent.startTime}:00.000Z`;
+      }
+
+      if (newEvent.endTime && newEvent.endTime.trim() !== '') {
+        endTime = `${selectedDateStr}T${newEvent.endTime}:00.000Z`;
+      }
 
       const updated = await updateEvent(editingEvent.id, {
         title: newEvent.title,
@@ -204,8 +216,8 @@ export default function CalendarScreen() {
       description: event.description,
       location: event.location,
       type: event.type,
-      startTime: event.startTime ? format(parseISO(event.startTime), 'HH:mm') : '',
-      endTime: event.endTime ? format(parseISO(event.endTime), 'HH:mm') : '',
+      startTime: (event.startTime && event.startTime.trim() !== '') ? format(parseISO(event.startTime), 'HH:mm') : '',
+      endTime: (event.endTime && event.endTime.trim() !== '') ? format(parseISO(event.endTime), 'HH:mm') : '',
     });
     setAttachments(event.attachments || []);
     setIsModalVisible(true);
@@ -322,8 +334,8 @@ export default function CalendarScreen() {
           </View>
         )}
         
-        {/* Only show time if it's not the default 9:00 AM - 10:00 AM */}
-        {!(format(parseISO(item.startTime), 'HH:mm') === '09:00' && format(parseISO(item.endTime), 'HH:mm') === '10:00') && (
+        {/* Only show time if both startTime and endTime are provided and not empty */}
+        {item.startTime && item.endTime && item.startTime.trim() !== '' && item.endTime.trim() !== '' && (
           <View style={styles.eventDetailItem}>
             <Clock size={14} color={COLORS.textMedium} />
             <Text style={styles.eventDetailText}>
@@ -514,13 +526,13 @@ export default function CalendarScreen() {
             />
 
             <View style={styles.timeInputsContainer}>
-              <Text style={styles.timeInputsLabel}>Event Time</Text>
+              <Text style={styles.timeInputsLabel}>Event Time (Optional)</Text>
               <View style={styles.timeInputsRow}>
                 <View style={styles.timeInputWrapper}>
                   <Text style={styles.timeInputLabel}>Start Time</Text>
                   <TextInput
                     style={styles.timeInput}
-                    placeholder="HH:MM"
+                    placeholder="HH:MM (Optional)"
                     value={newEvent.startTime}
                     onChangeText={(text) => setNewEvent(prev => ({ ...prev, startTime: text }))}
                   />
@@ -529,7 +541,7 @@ export default function CalendarScreen() {
                   <Text style={styles.timeInputLabel}>End Time</Text>
                   <TextInput
                     style={styles.timeInput}
-                    placeholder="HH:MM"
+                    placeholder="HH:MM (Optional)"
                     value={newEvent.endTime}
                     onChangeText={(text) => setNewEvent(prev => ({ ...prev, endTime: text }))}
                   />
