@@ -87,9 +87,10 @@ export default function CalendarScreen() {
   // Filter events for the selected date
   const filteredEvents = events.filter(event => {
     if (!event.startTime || event.startTime.trim() === '') {
-      // For events without time, show them on the selected date
-      return true;
+      // This shouldn't happen anymore with the new creation logic, but handle it gracefully
+      return false;
     }
+    // Check if the event's date matches the selected date
     return isSameDay(parseISO(event.startTime), selectedDate);
   });
 
@@ -118,17 +119,25 @@ export default function CalendarScreen() {
     }
 
     try {
-      // Only set times if user provided them
+      // Always include the selected date, with or without time
       const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
       let startTime = '';
       let endTime = '';
 
       if (newEvent.startTime && newEvent.startTime.trim() !== '') {
+        // User provided time - use it
         startTime = `${selectedDateStr}T${newEvent.startTime}:00.000Z`;
+      } else {
+        // No time provided - use start of day for the selected date
+        startTime = `${selectedDateStr}T00:00:00.000Z`;
       }
 
       if (newEvent.endTime && newEvent.endTime.trim() !== '') {
+        // User provided end time - use it
         endTime = `${selectedDateStr}T${newEvent.endTime}:00.000Z`;
+      } else {
+        // No end time provided - use end of day for the selected date
+        endTime = `${selectedDateStr}T23:59:59.000Z`;
       }
 
       const event = await createEvent({
@@ -250,7 +259,10 @@ export default function CalendarScreen() {
     const isToday = isSameDay(item, new Date());
     
     // Check if there are events on this day
-    const hasEvents = events.some(event => isSameDay(parseISO(event.startTime), item));
+    const hasEvents = events.some(event => {
+      if (!event.startTime) return false;
+      return isSameDay(parseISO(event.startTime), item);
+    });
     
     return (
       <TouchableOpacity
@@ -334,8 +346,9 @@ export default function CalendarScreen() {
           </View>
         )}
         
-        {/* Only show time if both startTime and endTime are provided and not empty */}
-        {item.startTime && item.endTime && item.startTime.trim() !== '' && item.endTime.trim() !== '' && (
+        {/* Only show time if it's not the default all-day time (00:00 - 23:59) */}
+        {item.startTime && item.endTime &&
+         !(format(parseISO(item.startTime), 'HH:mm') === '00:00' && format(parseISO(item.endTime), 'HH:mm') === '23:59') && (
           <View style={styles.eventDetailItem}>
             <Clock size={14} color={COLORS.textMedium} />
             <Text style={styles.eventDetailText}>
