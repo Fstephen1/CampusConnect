@@ -34,7 +34,7 @@ export default function LoginScreen() {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.logoContainer}>
           <Image
-            source={require('../../assets/images/Campus-hero')}
+            source={require('../../assets/images/Campus-hero.webp')}
             style={styles.logoBackground}
           />
           <View style={styles.overlay} />
