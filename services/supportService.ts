@@ -198,14 +198,34 @@ class SupportService {
     }
   }
 
-  // Get contact information
-  getContactInfo(): ContactInfo {
+  // Get contact information (now loads from storage with defaults)
+  async getContactInfo(): Promise<ContactInfo> {
+    try {
+      const stored = await AsyncStorage.getItem('support_contact_info');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (error) {
+      console.error('Error loading contact info:', error);
+    }
+
+    // Default contact information
     return {
-      email: 'support@campusconnect.edu',
-      phone: '+1 (555) 123-4567',
-      hours: 'Monday - Friday: 9:00 AM - 6:00 PM EST',
-      address: 'CampusConnect Support\n123 University Ave\nEducation City, EC 12345',
+      email: 'stephenmboudjika@gmail.com',
+      phone: '+(237)658144905',
+      hours: 'Monday - Friday: 9:00 AM - 6:00 PM',
+      address: 'CampusConnect',
     };
+  }
+
+  // Update contact information (admin only)
+  async updateContactInfo(contactInfo: ContactInfo): Promise<void> {
+    try {
+      await AsyncStorage.setItem('support_contact_info', JSON.stringify(contactInfo));
+    } catch (error) {
+      console.error('Error updating contact info:', error);
+      throw new Error('Failed to update contact information');
+    }
   }
 
   // Submit general feedback

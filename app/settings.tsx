@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, Modal } from 'react-native';
 import { router } from 'expo-router';
-import { ArrowLeft, Bell, Palette, Type, User, Volume2, Moon, Sun, Smartphone, Clock, Shield } from 'lucide-react-native';
+import { ArrowLeft, Bell, Palette, Type, User, Volume2, Moon, Sun, Smartphone, Clock, Shield, Settings as SettingsIcon } from 'lucide-react-native';
 import { COLORS } from '@/constants/Colors';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -257,6 +257,28 @@ export default function AppSettingsScreen() {
           </View>
         )}
 
+        {/* Admin Section - Only show for admin users */}
+        {user?.email === 'stephenmboudjika@gmail.com' && (
+          <>
+            {renderSectionHeader('Administration', <SettingsIcon size={20} color={COLORS.error} />)}
+
+            <TouchableOpacity
+              style={styles.adminItem}
+              onPress={() => router.push('/admin/contact-management')}
+            >
+              <View style={styles.adminLeft}>
+                <View style={styles.adminIcon}>
+                  <Shield size={16} color={COLORS.error} />
+                </View>
+                <View style={styles.adminText}>
+                  <Text style={styles.adminTitle}>Contact Management</Text>
+                  <Text style={styles.adminDescription}>Manage support contact information</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </>
+        )}
+
         <View style={styles.footer}>
           <Text style={styles.footerText}>
             Settings are automatically saved
@@ -404,6 +426,38 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Inter-Medium',
     color: COLORS.secondary,
+  },
+  adminItem: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: COLORS.error + '30',
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.error,
+  },
+  adminLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  adminIcon: {
+    marginRight: 12,
+  },
+  adminText: {
+    flex: 1,
+  },
+  adminTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter-SemiBold',
+    color: COLORS.textDark,
+    marginBottom: 4,
+  },
+  adminDescription: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: COLORS.textMedium,
   },
   footer: {
     alignItems: 'center',

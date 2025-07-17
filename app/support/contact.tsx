@@ -1,24 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Linking } from 'react-native';
 import { router } from 'expo-router';
 import { ArrowLeft, Phone, Mail, Clock, MapPin, Send } from 'lucide-react-native';
 import { COLORS } from '@/constants/Colors';
 import { useAuth } from '@/hooks/useAuth';
-import { supportService } from '@/services/supportService';
+import { supportService, ContactInfo } from '@/services/supportService';
 
 export default function ContactSupportScreen() {
   const { user } = useAuth();
   const [message, setMessage] = useState('');
   const [subject, setSubject] = useState('');
   const [loading, setLoading] = useState(false);
+  const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
 
-  const contactInfo = supportService.getContactInfo();
+  useEffect(() => {
+    loadContactInfo();
+  }, []);
+
+  const loadContactInfo = async () => {
+    try {
+      const info = await supportService.getContactInfo();
+      setContactInfo(info);
+    } catch (error) {
+      console.error('Error loading contact info:', error);
+    }
+  };
 
   const handleGoBack = () => {
     router.back();
   };
 
   const handleCall = async () => {
+    if (!contactInfo) return;
     const phoneUrl = `tel:${contactInfo.phone}`;
     const canOpen = await Linking.canOpenURL(phoneUrl);
     if (canOpen) {
@@ -29,6 +42,7 @@ export default function ContactSupportScreen() {
   };
 
   const handleEmail = async () => {
+    if (!contactInfo) return;
     const emailUrl = `mailto:${contactInfo.email}?subject=${encodeURIComponent(subject || 'CampusConnect Support Request')}&body=${encodeURIComponent(message)}`;
     const canOpen = await Linking.canOpenURL(emailUrl);
     if (canOpen) {
@@ -116,50 +130,58 @@ export default function ContactSupportScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Contact Methods */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Get in Touch</Text>
-          
-          {renderContactMethod(
-            <Phone size={20} color={COLORS.primary} />,
-            'Phone Support',
-            contactInfo.phone,
-            handleCall,
-            () => showContactInfo('Phone Number', contactInfo.phone)
-          )}
+        {!contactInfo ? (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading contact information...</Text>
+          </View>
+        ) : (
+          <>
+            {/* Contact Methods */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Get in Touch</Text>
 
-          {renderContactMethod(
-            <Mail size={20} color={COLORS.primary} />,
-            'Email Support',
-            contactInfo.email,
-            handleEmail,
-            () => showContactInfo('Email Address', contactInfo.email)
-          )}
+              {renderContactMethod(
+                <Phone size={20} color={COLORS.primary} />,
+                'Phone Support',
+                contactInfo.phone,
+                handleCall,
+                () => showContactInfo('Phone Number', contactInfo.phone)
+              )}
 
-          <View style={styles.contactMethod}>
-            <View style={styles.contactMethodHeader}>
-              <View style={styles.contactMethodIcon}>
-                <Clock size={20} color={COLORS.secondary} />
+              {renderContactMethod(
+                <Mail size={20} color={COLORS.primary} />,
+                'Email Support',
+                contactInfo.email,
+                handleEmail,
+                () => showContactInfo('Email Address', contactInfo.email)
+              )}
+
+              <View style={styles.contactMethod}>
+                <View style={styles.contactMethodHeader}>
+                  <View style={styles.contactMethodIcon}>
+                    <Clock size={20} color={COLORS.secondary} />
+                  </View>
+                  <View style={styles.contactMethodInfo}>
+                    <Text style={styles.contactMethodTitle}>Support Hours</Text>
+                    <Text style={styles.contactMethodValue}>{contactInfo.hours}</Text>
+                  </View>
+                </View>
               </View>
-              <View style={styles.contactMethodInfo}>
-                <Text style={styles.contactMethodTitle}>Support Hours</Text>
-                <Text style={styles.contactMethodValue}>{contactInfo.hours}</Text>
+
+              <View style={styles.contactMethod}>
+                <View style={styles.contactMethodHeader}>
+                  <View style={styles.contactMethodIcon}>
+                    <MapPin size={20} color={COLORS.secondary} />
+                  </View>
+                  <View style={styles.contactMethodInfo}>
+                    <Text style={styles.contactMethodTitle}>Address</Text>
+                    <Text style={styles.contactMethodValue}>{contactInfo.address}</Text>
+                  </View>
+                </View>
               </View>
             </View>
-          </View>
-
-          <View style={styles.contactMethod}>
-            <View style={styles.contactMethodHeader}>
-              <View style={styles.contactMethodIcon}>
-                <MapPin size={20} color={COLORS.secondary} />
-              </View>
-              <View style={styles.contactMethodInfo}>
-                <Text style={styles.contactMethodTitle}>Address</Text>
-                <Text style={styles.contactMethodValue}>{contactInfo.address}</Text>
-              </View>
-            </View>
-          </View>
-        </View>
+          </>
+        )}
 
         {/* Quick Message Form */}
         <View style={styles.section}>
@@ -262,6 +284,17 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: COLORS.textMedium,
   },
   section: {
     marginVertical: 20,

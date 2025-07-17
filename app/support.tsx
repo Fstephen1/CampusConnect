@@ -59,26 +59,34 @@ export default function SupportScreen() {
   };
 
   const handleCallSupport = async () => {
-    const contactInfo = supportService.getContactInfo();
-    const phoneUrl = `tel:${contactInfo.phone}`;
-    
-    const canOpen = await Linking.canOpenURL(phoneUrl);
-    if (canOpen) {
-      Linking.openURL(phoneUrl);
-    } else {
-      Alert.alert('Phone Not Available', 'Unable to open phone app on this device.');
+    try {
+      const contactInfo = await supportService.getContactInfo();
+      const phoneUrl = `tel:${contactInfo.phone}`;
+
+      const canOpen = await Linking.canOpenURL(phoneUrl);
+      if (canOpen) {
+        Linking.openURL(phoneUrl);
+      } else {
+        Alert.alert('Phone Not Available', 'Unable to open phone app on this device.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Unable to load contact information.');
     }
   };
 
   const handleEmailSupport = async () => {
-    const contactInfo = supportService.getContactInfo();
-    const emailUrl = `mailto:${contactInfo.email}?subject=CampusConnect Support Request`;
-    
-    const canOpen = await Linking.canOpenURL(emailUrl);
-    if (canOpen) {
-      Linking.openURL(emailUrl);
-    } else {
-      Alert.alert('Email Not Available', 'Unable to open email app on this device.');
+    try {
+      const contactInfo = await supportService.getContactInfo();
+      const emailUrl = `mailto:${contactInfo.email}?subject=CampusConnect Support Request`;
+
+      const canOpen = await Linking.canOpenURL(emailUrl);
+      if (canOpen) {
+        Linking.openURL(emailUrl);
+      } else {
+        Alert.alert('Email Not Available', 'Unable to open email app on this device.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Unable to load contact information.');
     }
   };
 
@@ -259,11 +267,11 @@ export default function SupportScreen() {
           </Text>
           <TouchableOpacity onPress={handleCallSupport}>
             <Text style={styles.phoneNumber}>
-              {supportService.getContactInfo().phone}
+              +(237)658144905
             </Text>
           </TouchableOpacity>
           <Text style={styles.hoursText}>
-            {supportService.getContactInfo().hours}
+            Monday - Friday: 9:00 AM - 6:00 PM
           </Text>
         </View>
       </ScrollView>
