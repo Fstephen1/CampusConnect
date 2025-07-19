@@ -123,10 +123,15 @@ class FirebaseAuth {
 
     const uid = Math.random().toString(36).substring(2, 9);
 
-    // Determine approval status based on role
+    // Determine approval status based on role and head admin status
     let status: 'pending' | 'approved' = 'approved';
     if (role === 'teacher' || role === 'admin') {
-      status = 'pending'; // Teacher/Admin accounts need approval
+      // Head admin is auto-approved, others need approval
+      if (email === HEAD_ADMIN_EMAIL) {
+        status = 'approved'; // Head admin auto-approved
+      } else {
+        status = 'pending'; // Other teacher/admin accounts need approval
+      }
     }
 
     const userAccount: UserAccount = {

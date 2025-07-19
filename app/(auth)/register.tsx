@@ -59,8 +59,21 @@ export default function RegisterScreen() {
           ]
         );
       } else {
-        // Student accounts are auto-approved
-        router.replace('/(tabs)');
+        // Student accounts and head admin are auto-approved
+        if (user.isHeadAdmin) {
+          Alert.alert(
+            'Welcome Head Administrator!',
+            'Your head admin account has been created successfully. You now have full administrative privileges.',
+            [
+              {
+                text: 'Continue',
+                onPress: () => router.replace('/(tabs)')
+              }
+            ]
+          );
+        } else {
+          router.replace('/(tabs)');
+        }
       }
     } catch (err) {
       setError((err as Error).message || 'Failed to register');
