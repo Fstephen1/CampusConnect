@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, Modal } from 'react-native';
 import { router } from 'expo-router';
-import { ArrowLeft, Bell, Palette, Type, User, Volume2, Moon, Sun, Smartphone, Clock, Shield, Settings as SettingsIcon } from 'lucide-react-native';
+import { ArrowLeft, Bell, Palette, Type, User, Volume2, Moon, Sun, Smartphone, Clock, Shield, Settings as SettingsIcon, UserCheck } from 'lucide-react-native';
 import { COLORS } from '@/constants/Colors';
 import { useAppSettings } from '@/context/AppSettingsContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -257,10 +257,25 @@ export default function AppSettingsScreen() {
           </View>
         )}
 
-        {/* Admin Section - Only show for admin users */}
-        {user?.email === 'stephenmboudjika@gmail.com' && (
+        {/* Admin Section - Only show for head admin */}
+        {user?.isHeadAdmin && (
           <>
             {renderSectionHeader('Administration', <SettingsIcon size={20} color={COLORS.error} />)}
+
+            <TouchableOpacity
+              style={styles.adminItem}
+              onPress={() => router.push('/admin/pending-approvals')}
+            >
+              <View style={styles.adminLeft}>
+                <View style={styles.adminIcon}>
+                  <UserCheck size={16} color={COLORS.warning} />
+                </View>
+                <View style={styles.adminText}>
+                  <Text style={styles.adminTitle}>Pending Approvals</Text>
+                  <Text style={styles.adminDescription}>Approve teacher and admin registrations</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.adminItem}

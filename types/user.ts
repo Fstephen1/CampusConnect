@@ -4,6 +4,8 @@ export interface User {
   displayName: string;
   photoURL: string | null;
   role: 'student' | 'teacher' | 'admin';
+  status?: 'pending' | 'approved' | 'rejected';
+  isHeadAdmin?: boolean;
   notificationRoles?: string[];
 }
 
@@ -14,6 +16,8 @@ export interface UserAccount {
   displayName: string;
   photoURL: string | null;
   role: 'student' | 'teacher' | 'admin';
+  status: 'pending' | 'approved' | 'rejected';
+  isHeadAdmin?: boolean;
   createdAt: string;
 }
 

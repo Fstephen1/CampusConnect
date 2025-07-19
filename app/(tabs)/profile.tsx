@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIn
 import { COLORS } from '@/constants/Colors';
 import { useAuth } from '@/hooks/useAuth';
 import { router } from 'expo-router';
-import { LogOut, Settings, ChevronRight, CreditCard as Edit2, User, Bell, Shield, CircleHelp as HelpCircle, X, Users } from 'lucide-react-native';
+import { LogOut, Settings, ChevronRight, CreditCard as Edit2, User, Bell, Shield, CircleHelp as HelpCircle, X, Users, Crown } from 'lucide-react-native';
 import { notificationRoleService } from '@/services/notificationRoleService';
 import { NotificationRole, UserNotificationPreferences } from '@/types/notificationRoles';
 import RoleManagement from '@/components/RoleManagement';
@@ -191,11 +191,19 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             </View>
             <Text style={styles.profileEmail}>{user.email}</Text>
-            <View style={[
-              styles.roleBadge,
-              { backgroundColor: getRoleBadgeColor(user.role) }
-            ]}>
-              <Text style={styles.roleText}>{getRoleDisplayText(user.role)}</Text>
+            <View style={styles.roleContainer}>
+              <View style={[
+                styles.roleBadge,
+                { backgroundColor: getRoleBadgeColor(user.role) }
+              ]}>
+                <Text style={styles.roleText}>{getRoleDisplayText(user.role)}</Text>
+              </View>
+              {user.isHeadAdmin && (
+                <View style={styles.headAdminBadge}>
+                  <Crown size={12} color={COLORS.warning} />
+                  <Text style={styles.headAdminText}>Head Admin</Text>
+                </View>
+              )}
             </View>
           </View>
         )}
@@ -458,6 +466,11 @@ const styles = StyleSheet.create({
     color: COLORS.textMedium,
     marginBottom: 8,
   },
+  roleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   roleBadge: {
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -467,6 +480,22 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
     fontSize: 14,
     color: 'white',
+  },
+  headAdminBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.warning + '20',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    gap: 4,
+  },
+  headAdminText: {
+    fontSize: 10,
+    fontFamily: 'Inter-Bold',
+    color: COLORS.warning,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   editNameContainer: {
     width: '100%',

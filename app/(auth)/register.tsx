@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { UserPlus } from 'lucide-react-native';
 import { useAuth } from '@/hooks/useAuth';
@@ -38,14 +38,30 @@ export default function RegisterScreen() {
 
     setError(null);
     try {
-      await register({
+      const user = await register({
         name,
         email,
         password,
         role,
         accessCode: accessCode || undefined
       });
-      router.replace('/(tabs)');
+
+      // Check if account needs approval
+      if (user.status === 'pending') {
+        Alert.alert(
+          'Account Created Successfully!',
+          `Your ${role} account has been created and is pending administrator approval. You'll be able to access the app once your account is approved.`,
+          [
+            {
+              text: 'OK',
+              onPress: () => router.replace('/login')
+            }
+          ]
+        );
+      } else {
+        // Student accounts are auto-approved
+        router.replace('/(tabs)');
+      }
     } catch (err) {
       setError((err as Error).message || 'Failed to register');
     }

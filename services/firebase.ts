@@ -43,6 +43,9 @@ export { auth };
 */
 export const storage = getStorage(app);
 
+// Head Admin Configuration
+const HEAD_ADMIN_EMAIL = 'stephenmboudjika@gmail.com';
+
 class FirebaseAuth {
   private currentUser: User | null = null;
   private users: { [email: string]: UserAccount } = {};
@@ -66,12 +69,23 @@ class FirebaseAuth {
       throw new Error('Invalid password');
     }
 
+    // Check approval status for teacher/admin accounts
+    if ((userAccount.role === 'teacher' || userAccount.role === 'admin') && userAccount.status === 'pending') {
+      throw new Error('Your account is pending approval. Please wait for administrator approval.');
+    }
+
+    if (userAccount.status === 'rejected') {
+      throw new Error('Your account has been rejected. Please contact the administrator.');
+    }
+
     const user: User = {
       uid: userAccount.uid,
       email: userAccount.email,
       displayName: userAccount.displayName,
       photoURL: userAccount.photoURL,
-      role: userAccount.role
+      role: userAccount.role,
+      status: userAccount.status,
+      isHeadAdmin: userAccount.email === HEAD_ADMIN_EMAIL
     };
 
     this.currentUser = user;
@@ -109,6 +123,12 @@ class FirebaseAuth {
 
     const uid = Math.random().toString(36).substring(2, 9);
 
+    // Determine approval status based on role
+    let status: 'pending' | 'approved' = 'approved';
+    if (role === 'teacher' || role === 'admin') {
+      status = 'pending'; // Teacher/Admin accounts need approval
+    }
+
     const userAccount: UserAccount = {
       uid,
       email,
@@ -116,6 +136,8 @@ class FirebaseAuth {
       displayName: name,
       photoURL: null,
       role,
+      status,
+      isHeadAdmin: email === HEAD_ADMIN_EMAIL,
       createdAt: new Date().toISOString()
     };
 
@@ -126,10 +148,19 @@ class FirebaseAuth {
       email: userAccount.email,
       displayName: userAccount.displayName,
       photoURL: userAccount.photoURL,
-      role: userAccount.role
+      role: userAccount.role,
+      status: userAccount.status,
+      isHeadAdmin: userAccount.isHeadAdmin
     };
 
-    this.currentUser = user;
+    // Only set as current user if approved (students are auto-approved)
+    if (status === 'approved') {
+      this.currentUser = user;
+    } else {
+      // For pending accounts, don't set as current user but still return for feedback
+      this.currentUser = null;
+    }
+
     return user;
   }
   
@@ -195,6 +226,63 @@ class FirebaseAuth {
     callback(this.currentUser);
 
     return () => {};
+  }
+
+  // Admin approval methods
+  async getPendingApprovals(): Promise<UserAccount[]> {
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    return Object.values(this.users).filter(user =>
+      user.status === 'pending' && (user.role === 'teacher' || user.role === 'admin')
+    );
+  }
+
+  async approveUser(email: string): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const userAccount = this.users[email];
+    if (!userAccount) {
+      throw new Error('User not found');
+    }
+
+    if (userAccount.status !== 'pending') {
+      throw new Error('User is not pending approval');
+    }
+
+    userAccount.status = 'approved';
+    console.log(`User approved: ${email}`);
+  }
+
+  async rejectUser(email: string): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const userAccount = this.users[email];
+    if (!userAccount) {
+      throw new Error('User not found');
+    }
+
+    if (userAccount.status !== 'pending') {
+      throw new Error('User is not pending approval');
+    }
+
+    userAccount.status = 'rejected';
+    console.log(`User rejected: ${email}`);
+  }
+
+  // Check if current user is head admin
+  isHeadAdmin(): boolean {
+    return this.currentUser?.email === HEAD_ADMIN_EMAIL;
+  }
+
+  // Get all users (admin only)
+  async getAllUsers(): Promise<UserAccount[]> {
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    if (!this.isHeadAdmin()) {
+      throw new Error('Access denied. Head admin only.');
+    }
+
+    return Object.values(this.users);
   }
 }
 export const firebaseAuth = new FirebaseAuth();
